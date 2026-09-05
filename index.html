@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Balance Game - Survival Mode</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --accent-green: #2ecc71;
+            --accent-red: #e74c3c;
+            --primary-blue: #3498db;
+            --accent-yellow: #f1c40f;
+            --text-color: #ffffff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', -apple-system, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-color); display: flex; justify-content: center; padding: 20px; }
+        
+        .container { width: 100%; max-width: 480px; background: var(--card-bg); border-radius: 16px; padding: 24px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+        h1 { font-size: 1.6rem; margin-bottom: 4px; color: var(--accent-yellow); }
+        .sub-title { font-size: 0.9rem; color: #aaa; margin-bottom: 12px; }
+        
+        .rules { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 20px; line-height: 1.4; }
+        
+        .screen { display: none; }
+        .screen.active { display: block; }
+
+        input[type="text"] { width: 100%; padding: 14px; font-size: 1rem; border-radius: 8px; border: 1px solid #444; background: #2a2a2a; color: #fff; margin-bottom: 12px; text-align: center; }
+        
+        button { width: 100%; padding: 16px; font-size: 1rem; font-weight: bold; border-radius: 12px; border: none; cursor: pointer; transition: transform 0.1s; margin-top: 10px; }
+        button:active { transform: scale(0.98); }
+        button:disabled { background-color: #555 !important; color: #888 !important; cursor: not-allowed; }
+        
+        .btn-main { background-color: var(--primary-blue); color: white; }
+        .btn-yellow { background-color: var(--accent-yellow); color: #121212; }
+        .btn-penalty { background-color: var(--accent-yellow); color: #121212; }
+        .btn-reset { background-color: #7f8c8d; color: white; }
+        .btn-option { background-color: #2c3e50; color: white; min-height: 80px; margin-bottom: 12px; font-size: 1rem; word-break: keep-all; line-height: 1.3; }
+
+        .code-box { background: #2a2a2a; border: 2px dashed var(--accent-yellow); padding: 10px; border-radius: 8px; font-size: 1.8rem; font-weight: bold; color: var(--accent-yellow); letter-spacing: 4px; margin: 10px 0; }
+        
+        .player-grid { max-height: 160px; overflow-y: auto; padding: 6px; background: #181818; border-radius: 8px; margin: 10px 0; text-align: center; }
+        .player-tag { display: inline-block; background: #333; padding: 4px 10px; border-radius: 16px; margin: 3px; font-size: 0.85rem; border: 1px solid #555; }
+        .player-tag.eliminated { background: #441111; color: #888; border-color: #772222; text-decoration: line-through; }
+
+        .timer { font-size: 2.8rem; font-weight: bold; color: var(--accent-red); margin: 8px 0; }
+        
+        .result-card { padding: 14px; border-radius: 12px; margin-bottom: 12px; text-align: left; }
+        .majority { background-color: rgba(46, 204, 113, 0.2); border: 2px solid var(--accent-green); }
+        .minority { background-color: rgba(231, 76, 60, 0.2); border: 2px solid var(--accent-red); }
+        
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; margin-bottom: 6px; }
+        .badge-majority { background: var(--accent-green); color: black; }
+        .badge-minority { background: var(--accent-red); color: white; }
+
+        .player-list { font-size: 0.85rem; color: #ccc; margin-top: 6px; word-break: break-all; }
+        .penalty-box { background: rgba(241, 196, 15, 0.15); border: 2px dashed var(--accent-yellow); padding: 14px; border-radius: 12px; margin-top: 12px; }
+        .penalty-text { font-size: 1.1rem; font-weight: bold; color: var(--accent-yellow); margin-top: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>밸런스 서바이버</h1>
+    <div class="sub-title">Balance Game - Survival</div>
+    <div class="rules">
+        💡 <b>규칙 (Rules):</b> 소수파는 탈락합니다! 마지막 2명이 남을 때까지 서바이벌!<br>
+        <span style="color: var(--accent-red);">Minority will be ELIMINATED until 2 Winners remains!</span>
+    </div>
+
+    <!-- 1. 입장 화면 (Login) -->
+    <div id="screen-login" class="screen active">
+        <input type="text" id="nickname" placeholder="별명 입력 / Nickname (Max 8)" maxlength="8">
+        <button class="btn-main" onclick="createRoom()">방 만들기 (Host)<br><small>Create Room</small></button>
+        <div style="margin: 12px 0; color: #777;">─── OR ───</div>
+        <input type="text" id="join-code" placeholder="방 코드 4자리 / Room Code" maxlength="4">
+        <button class="btn-yellow" onclick="joinRoom()">참가하기 (Join)<br><small>Join Room</small></button>
+    </div>
+
+    <!-- 2. 대기실 화면 (Wait) -->
+    <div id="screen-wait" class="screen">
+        <p style="font-size: 0.85rem; color: #aaa;">방 코드를 공유하세요! / Share Room Code!</p>
+        <div class="code-box" id="display-room-code">----</div>
+        
+        <h3 style="margin-top: 10px; font-size: 1rem;">참가자 목록 (Players) [<span id="player-count">0</span>]</h3>
+        <div class="player-grid" id="player-list"></div>
+        
+        <button id="btn-start" class="btn-main" onclick="startGame()" style="display:none;">게임 시작 (Start Game)</button>
+        <button id="btn-reset-wait" class="btn-reset" onclick="resetGame()" style="display:none; margin-top:6px;">🔄 참가자 생존 리셋 (Reset Players)</button>
+        <p id="wait-msg" style="color: #aaa; margin-top: 10px; font-size: 0.85rem;">방장이 게임을 시작하길 기다리는 중...<br>Waiting for Host to start...</p>
+    </div>
+
+    <!-- 3. 게임 투표 화면 (Game) -->
+    <div id="screen-game" class="screen">
+        <div class="timer" id="timer-display">5</div>
+        <div id="eliminated-notice" style="display:none; color: var(--accent-red); font-weight:bold; margin-bottom:10px;">
+            ❌ 귀하는 탈락했습니다. (관전 중)<br>You are eliminated. (Spectating)
+        </div>
+        <button class="btn-option" id="opt1-btn" onclick="submitVote(1)"></button>
+        <button class="btn-option" id="opt2-btn" onclick="submitVote(2)"></button>
+    </div>
+
+    <!-- 4. 결과 화면 (Result) -->
+    <div id="screen-result" class="screen">
+        <h2>🎉 라운드 결과 (Result)</h2>
+        <br>
+        <div id="result-container"></div>
+        
+        <div id="penalty-section" class="penalty-box" style="display: none;">
+            <div>🚨 탈락자 벌칙 (Penalty)</div>
+            <div class="penalty-text" id="penalty-display"></div>
+        </div>
+
+        <button class="btn-penalty" id="btn-draw-penalty" onclick="drawPenalty()" style="display: none;">🎰 벌칙 뽑기 (Draw Penalty)</button>
+        <button class="btn-main" id="btn-next" onclick="nextRound()" style="display:none; margin-top: 12px;">다음 라운드 (Next Round)</button>
+        <button class="btn-reset" id="btn-reset-result" onclick="resetGame()" style="display:none; margin-top: 8px;">🔄 처음부터 다시 하기 (Restart Game)</button>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        ["평생 여름만 살기<br><small>Summer forever</small>", "평생 겨울만 살기<br><small>Winter forever</small>"],
+        ["1년 동안 커피 금지<br><small>No Coffee for 1 year</small>", "1년 동안 술 금지<br><small>No Alcohol for 1 year</small>"],
+        ["친구 100명과 얕게 지내기<br><small>100 casual friends</small>", "친구 3명과 깊게 지내기<br><small>3 close best friends</small>"],
+        ["10억 받고 10년 해외여행 금지<br><small>Get $1M, No travel for 10 yrs</small>", "돈 없이 평생 자유롭게 여행<br><small>No money, Free travel forever</small>"],
+        ["평생 라면만 먹기<br><small>Eat only Ramen forever</small>", "평생 치킨만 먹기<br><small>Eat only Chicken forever</small>"],
+        ["매일 1시간 일찍 출근<br><small>Work 1 hr earlier</small>", "매일 1시간 늦게 퇴근<br><small>Leave work 1 hr later</small>"],
+        ["연락 하루 1번 연애<br><small>Text once a day</small>", "매일 30분 통화 연애<br><small>30m call every day</small>"],
+        ["평생 사진 못 찍기<br><small>Never take photos</small>", "평생 사진 보관 못 하기<br><small>Never save photos</small>"],
+        ["내 흑역사 하나 공개<br><small>Reveal my embarrassing history</small>", "친구 흑역사 하나 듣기<br><small>Hear friend's embarrassing history</small>"],
+        ["평생 운전 못 하기<br><small>Never drive a car</small>", "평생 대중교통만 이용<br><small>Only public transport</small>"],
+        ["10년 젊어지기<br><small>Become 10 years younger</small>", "10년 후로 순간이동<br><small>Time travel 10 yrs future</small>"],
+        ["모두가 나를 좋아하지만 친한 친구 없음<br><small>Liked by all, no close friends</small>", "친한 친구는 많지만 모두가 나를 어려워함<br><small>Close friends, hard to approach</small>"],
+        ["평생 아침형 인간<br><small>Morning person forever</small>", "평생 야행성 인간<br><small>Night owl forever</small>"],
+        ["맛있는 음식 적은 양<br><small>Delicious food in small portion</small>", "평범한 음식 무제한<br><small>Average food unlimited</small>"],
+        ["평생 한식만 먹기<br><small>Korean food only</small>", "평생 양식만 먹기<br><small>Western food only</small>"],
+        ["평생 영화만 보기<br><small>Watch Movies only</small>", "평생 드라마만 보기<br><small>Watch TV Series only</small>"],
+        ["가수 콘서트 평생 무료<br><small>Free concert tickets forever</small>", "좋아하는 배우와 평생 친구<br><small>Best friend with top actor</small>"],
+        ["월급 2배 & 주 6일<br><small>2x salary & Work 6 days</small>", "월급 절반 & 주 3일<br><small>Half salary & Work 3 days</small>"],
+        ["출퇴근 10분 & 작은 집<br><small>10m commute & Small house</small>", "출퇴근 2시간 & 큰 집<br><small>2h commute & Huge house</small>"],
+        ["평생 인터넷 없이 살기<br><small>No Internet forever</small>", "평생 TV 없이 살기<br><small>No TV forever</small>"],
+        ["모두에게 솔직하기<br><small>Always brutally honest</small>", "항상 배려해서 말하기<br><small>Always considerate</small>"],
+        ["한 달 휴가 대신 월급 30% 인상<br><small>+30% salary, No vacation</small>", "월급 그대로 매년 한 달 휴가<br><small>Same salary, 1 month vacation</small>"],
+        ["평생 아이스크림 금지<br><small>No Ice cream forever</small>", "평생 탄산음료 금지<br><small>No Soda forever</small>"],
+        ["평생 고기 금지<br><small>No Meat forever</small>", "평생 면 금지<br><small>No Noodles forever</small>"],
+        ["평생 단맛 금지<br><small>No Sweet food</small>", "평생 매운맛 금지<br><small>No Spicy food</small>"],
+        ["10억 받고 현재 직업 유지<br><small>Get $1M & keep current job</small>", "3억 받고 하고 싶은 일 시작<br><small>Get $300K & start dream job</small>"],
+        ["유명하지만 사생활 없음<br><small>Famous, No privacy</small>", "평범하지만 완전한 사생활<br><small>Ordinary, Full privacy</small>"],
+        ["과거로 하루 돌아가기<br><small>Time travel 1 day back</small>", "미래를 하루 미리 보기<br><small>See 1 day in the future</small>"],
+        ["평생 한 도시에서 살기<br><small>Live in 1 city forever</small>", "5년마다 이사하기<br><small>Move every 5 years</small>"],
+        ["매일 30분 운동<br><small>30m workout every day</small>", "매일 30분 독서<br><small>30m reading every day</small>"],
+        ["평생 아침식사만 먹기<br><small>Eat only Breakfast</small>", "평생 저녁식사만 먹기<br><small>Eat only Dinner</small>"],
+        ["좋아하는 음식 1개만 평생 먹기<br><small>Eat 1 favorite food forever</small>", "매일 다른 평범한 음식<br><small>Different average food daily</small>"],
+        ["평생 비 오는 날만 살기<br><small>Rainy days forever</small>", "평생 맑은 날만 살기<br><small>Sunny days forever</small>"],
+        ["여행 편하지만 사진 금지<br><small>Comfy travel, No photos</small>", "불편한 여행 & 자유로운 사진<br><small>Uncomfy travel, Free photos</small>"],
+        ["친구와 돈 문제 없음<br><small>No money conflict with friends</small>", "친구와 감정 문제 없음<br><small>No emotional conflict</small>"],
+        ["평생 거짓말 못 하기<br><small>Never tell a lie</small>", "평생 비밀 못 지키기<br><small>Never keep a secret</small>"],
+        ["내 생각 모두 들킴<br><small>Everyone reads my mind</small>", "남의 생각 모두 들음<br><small>I read everyone's mind</small>"],
+        ["하루 1번만 휴대폰 사용<br><small>Use phone once a day</small>", "하루 1번만 PC 사용<br><small>Use PC once a day</small>"],
+        ["평생 카톡(메시지)만 사용<br><small>Texting only forever</small>", "평생 전화만 사용<br><small>Phone call only forever</small>"],
+        ["평생 엘리베이터 금지<br><small>No Elevator forever</small>", "평생 에스컬레이터 금지<br><small>No Escalator forever</small>"],
+        ["평생 국내여행만 가능<br><small>Domestic travel only</small>", "평생 해외여행만 가능<br><small>International travel only</small>"],
+        ["친구가 내 옷 골라주기<br><small>Friend picks my clothes</small>", "친구가 내 머리스타일 골라주기<br><small>Friend picks my hairstyle</small>"],
+        ["매일 같은 옷 입기<br><small>Wear same clothes daily</small>", "매일 친구가 옷 골라주기<br><small>Friend chooses clothes daily</small>"],
+        ["평생 신발 1켤레<br><small>1 pair of shoes forever</small>", "평생 가방 1개<br><small>1 bag forever</small>"],
+        ["평생 음악 없이 살기<br><small>No Music forever</small>", "평생 영화 없이 살기<br><small>No Movies forever</small>"],
+        ["평생 책 1권만 읽기<br><small>Read only 1 book forever</small>", "평생 영화 1편만 보기<br><small>Watch only 1 movie forever</small>"],
+        ["모든 시험 만점 & 발표 필수<br><small>100% test score, Presentation req.</small>", "시험 평균 & 발표 면제<br><small>Average score, No presentation</small>"],
+        ["일 재미있음 & 월급 적음<br><small>Fun job, Low salary</small>", "일 재미없음 & 월급 많음<br><small>Boring job, High salary</small>"],
+        ["상사와 친함 & 동료와 어색<br><small>Close to boss, awkward with peers</small>", "동료와 친함 & 상사와 어색<br><small>Close to peers, awkward with boss</small>"],
+        ["평생 회식 없음<br><small>No company dinners</small>", "평생 야근 없음<br><small>No overtime work</small>"],
+        ["매일 10분 지각<br><small>Late 10 mins daily</small>", "매일 10분 일찍 도착<br><small>Early 10 mins daily</small>"],
+        ["평생 주말만 일하기<br><small>Work weekends only</small>", "평생 평일만 일하기<br><small>Work weekdays only</small>"],
+        ["배터리 100% & 느린 인터넷<br><small>100% battery, Slow internet</small>", "배터리 10% & 빠른 인터넷<br><small>10% battery, Fast internet</small>"],
+        ["사진에 항상 눈 감기<br><small>Eyes closed in every photo</small>", "영상에서 항상 말 더듬기<br><small>Stutter in every video</small>"],
+        ["평생 이름 잘못 불리기<br><small>Name mispronounced forever</small>", "평생 얼굴 잘못 알아보기<br><small>Face mistaken forever</small>"],
+        ["친구가 내 검색기록 보기<br><small>Friend checks search history</small>", "친구가 내 사진첩 보기<br><small>Friend checks photo gallery</small>"],
+        ["내 SNS 전체 공개<br><small>Public SNS posts</small>", "내 메신저 프로필 전체 공개<br><small>Public profile info</small>"],
+        ["평생 소개팅 100번<br><small>100 blind dates</small>", "소개팅 없이 혼자 살기<br><small>No dates, live alone</small>"],
+        ["첫눈에 반하는 연애<br><small>Love at first sight</small>", "천천히 깊어지는 연애<br><small>Slow burn romance</small>"],
+        ["돈 많은 사람과 결혼<br><small>Marry rich person</small>", "사랑하는 사람과 결혼<br><small>Marry true love</small>"],
+        ["안정적이지만 설렘 없음<br><small>Stable but no sparks</small>", "설레지만 불안정함<br><small>Sparks but unstable</small>"],
+        ["평생 연애만 하기<br><small>Dating forever, no marriage</small>", "짧은 연애 후 결혼<br><small>Quick marriage after dating</small>"],
+        ["친구가 내 이상형과 데이트<br><small>Friend dates my crush</small>", "내가 친구 이상형과 데이트<br><small>I date friend's crush</small>"],
+        ["친구에게 휴대폰 공개<br><small>Show phone to friend</small>", "친구에게 지갑 공개<br><small>Show wallet to friend</small>"],
+        ["10년 동안 같은 헤어스타일<br><small>Same hairstyle for 10 yrs</small>", "10년 동안 같은 패션스타일<br><small>Same fashion for 10 yrs</small>"],
+        ["평생 안경 쓰기<br><small>Wear glasses forever</small>", "평생 렌즈 쓰기<br><small>Wear contacts forever</small>"],
+        ["여름에 에어컨 없음<br><small>No AC in Summer</small>", "겨울에 난방 없음<br><small>No Heater in Winter</small>"],
+        ["평생 커피만 마시기<br><small>Drink coffee only</small>", "평생 차만 마시기<br><small>Drink tea only</small>"],
+        ["평생 밥 없이 살기<br><small>No Rice forever</small>", "평생 반찬 없이 살기<br><small>No side dishes forever</small>"],
+        ["평생 배달음식 금지<br><small>No delivery food</small>", "평생 외식 금지<br><small>No eating out</small>"],
+        ["평생 편의점 음식만<br><small>Convenience store food only</small>", "평생 집밥만<br><small>Home-cooked meal only</small>"],
+        ["매운 음식만 잘 먹기<br><small>Good at spicy food only</small>", "단 음식만 잘 먹기<br><small>Good at sweet food only</small>"],
+        ["술자리에서 계산 담당<br><small>Pay the bill every party</small>", "술자리에서 건배사 담당<br><small>Give toast speech every party</small>"],
+        ["모임마다 가장 먼저 도착<br><small>Always arrive first</small>", "모임마다 가장 늦게 도착<br><small>Always arrive last</small>"],
+        ["모두의 생일 기억하기<br><small>Remember everyone's birthday</small>", "모두의 이름 기억하기<br><small>Remember everyone's name</small>"],
+        ["친구 조언만 듣기<br><small>Follow friend's advice only</small>", "혼자 결정하기<br><small>Decide everything alone</small>"],
+        ["하루 6시간 수면<br><small>Sleep 6 hours daily</small>", "하루 9시간 수면<br><small>Sleep 9 hours daily</small>"],
+        ["돈 많고 시간 없음<br><small>Rich & No free time</small>", "시간 많고 돈 없음<br><small>Broke & Lots of time</small>"],
+        ["매일 5만원 받기<br><small>Get $40 every day</small>", "오늘 1억원 받기<br><small>Get $80,000 right now</small>"],
+        ["10년 뒤 재산 2배<br><small>2x wealth in 10 years</small>", "지금 재산 1.5배<br><small>1.5x wealth right now</small>"],
+        ["안정적인 직장<br><small>Stable workplace</small>", "성공 가능성 높은 창업<br><small>High potential startup</small>"],
+        ["평생 월급 고정<br><small>Fixed salary forever</small>", "성과 따라 월급 3배 변동<br><small>Performance-based up to 3x</small>"],
+        ["집은 크지만 도심 밖<br><small>Big house in suburbs</small>", "집은 작지만 도심 속<br><small>Tiny apartment downtown</small>"],
+        ["고급 오래된 차<br><small>Old luxury car</small>", "평범한 최신 차<br><small>New average car</small>"],
+        ["여행 동반자 있음<br><small>Travel partner always</small>", "혼자서 자유 여행<br><small>Solo travel freely</small>"],
+        ["맛집 줄 1시간 서기<br><small>Wait 1 hr for top restaurant</small>", "평범한 식당 바로 입장<br><small>Enter average restaurant now</small>"],
+        ["예약 필수 맛집<br><small>Reservation required spot</small>", "예약 없는 맛집<br><small>Walk-in spot</small>"],
+        ["친구가 운동 잘함<br><small>Friends athletic</small>", "친구가 요리 잘함<br><small>Friends great cooks</small>"],
+        ["노래 잘함 & 춤 못 춤<br><small>Good singer & Bad dancer</small>", "춤 잘 춤 & 노래 못 함<br><small>Good dancer & Bad singer</small>"],
+        ["말 잘함 & 글 못 씀<br><small>Good speaker & Bad writer</small>", "글 잘 씀 & 말 못 함<br><small>Good writer & Bad speaker</small>"],
+        ["사진 잘 찍음<br><small>Great photographer</small>", "사진에 잘 나옴<br><small>Photogenic person</small>"],
+        ["평생 웃음 많음<br><small>Always laughing</small>", "평생 침착함<br><small>Always calm</small>"],
+        ["항상 5분 늦음<br><small>Always 5 mins late</small>", "항상 30분 일찍 옴<br><small>Always 30 mins early</small>"],
+        ["매일 소소한 행운<br><small>Small luck daily</small>", "한 달에 1번 대박 행운<br><small>Huge luck monthly</small>"],
+        ["작은 실수 안 하기<br><small>No small mistakes</small>", "큰 기회 한 번 잡기<br><small>Catch one big chance</small>"],
+        ["원하는 사람만 기억<br><small>Remember desired people</small>", "모두가 나를 기억<br><small>Everyone remembers me</small>"],
+        ["오늘 기억 완벽 저장<br><small>Save today's memory</small>", "원하는 기억 삭제<br><small>Erase unwanted memory</small>"],
+        ["모든 외국어 유창<br><small>Fluent in all languages</small>", "모든 악기 연주<br><small>Play all instruments</small>"],
+        ["요리 완벽 능숙<br><small>Master of cooking</small>", "운동 완벽 능숙<br><small>Master of sports</small>"],
+        ["평생 운이 좋음<br><small>Lucky forever</small>", "평생 판단력이 좋음<br><small>Great wisdom forever</small>"]
+    ];
+
+    const penalties = [
+        "한 모금 마시기 (Take a sip)", "건배사 하기 (Give a toast)", "옆 사람 칭찬하기 (Praise person next to you)", 
+        "10초 춤추기 (Dance for 10 sec)", "다음 라운드 첫 번째 선택 (Select first next round)", 
+        "다음 라운드 마지막 선택 (Select last next round)", "노래 한 소절 (Sing a song line)", 
+        "최근 검색 음식 말하기 (Last searched food)", "가장 웃긴 사람 지목 (Point most funny person)", 
+        "왼쪽 사람에게 감사하기 (Thank person on left)", "오른쪽 사람에게 질문 (Ask person on right)", 
+        "자신의 장점 말하기 (State your strength)", "자신의 단점 말하기 (State your weakness)", 
+        "소소한 실수 공개 (Share small mistake)", "친구 별명 지어주기 (Make nickname for friend)", 
+        "10초 포즈 유지 (Hold pose for 10 sec)", "다음 라운드 존댓말 (Speak formally next round)", 
+        "말끝에 '요' 붙이기 (Add 'Yo' at sentence end)", "모두에게 박수 (Clap for everyone)", 
+        "건배 구호 만들기 (Make a toast chant)", "다음 선택 예측 (Predict next pick)", 
+        "가장 먼저 웃은 사람 지목 (Point who laughed first)", "가장 늦게 온 사람 지목 (Point latecomer)", 
+        "첫 번째 온 사람에게 한마디 (Message to first arrival)", "가위바위보 진 사람 한 모금 (RPS loser drinks)", 
+        "가위바위보 이기면 면제 (RPS winner safe)", "노래 제목 말하기 (Name a song title)", 
+        "10초 안에 음식 5개 (5 foods in 10s)", "10초 안에 나라 5개 (5 countries in 10s)", 
+        "10초 안에 영화 3편 (3 movies in 10s)", "10초 안에 과일 5개 (5 fruits in 10s)", 
+        "10초 안에 동물 5개 (5 animals in 10s)", "10초 안에 브랜드 5개 (5 brands in 10s)", 
+        "다음 라운드 반대로 선택 (Pick opposite next round)", "오늘 기분 한 단어 (Today's mood in 1 word)", 
+        "최근 본 영화 말하기 (Last movie you watched)", "가장 좋아하는 음식 (Your favorite food)", 
+        "가장 싫어하는 음식 (Your hated food)", "가고 싶은 여행지 (Dream travel destination)", 
+        "올해 목표 하나 (One goal this year)", "어릴 때 꿈 하나 (Childhood dream)", 
+        "최근 잘한 소비 (Best recent purchase)", "최근 아까운 소비 (Worst recent purchase)", 
+        "친구에게 훈훈한 말하기 (Say sweet thing to friend)", "5초 무표정 (No expression for 5s)", 
+        "5초 웃는 표정 (Smile for 5s)", "다음 라운드 팔짱 끼기 (Cross arms next round)", 
+        "다음 라운드 폰 내려놓기 (Put phone down next round)", "테이블 전체 건배 (Toast with everyone)", 
+        "벌칙 두 배 (Double Penalty)"
+    ];
+
+    let peer = null;
+    let myNickname = "";
+    let isHost = false;
+    let roomCode = "";
+    let connections = []; 
+    let hostConn = null;  
+    let players = []; 
+    let votes = {};
+    let currentQuestion = [];
+    let timerInterval;
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    function createRoom() {
+        myNickname = document.getElementById('nickname').value.trim();
+        if (!myNickname) return alert('별명을 입력해주세요! / Please enter nickname!');
+        
+        isHost = true;
+        roomCode = Math.floor(1000 + Math.random() * 9000).toString();
+        
+        peer = new Peer('bg-game-' + roomCode);
+        
+        peer.on('open', () => {
+            document.getElementById('display-room-code').innerText = roomCode;
+            players.push({ id: peer.id, name: myNickname, eliminated: false });
+            updatePlayerList();
+            document.getElementById('btn-start').style.display = 'block';
+            document.getElementById('btn-reset-wait').style.display = 'block';
+            document.getElementById('wait-msg').style.display = 'none';
+            showScreen('screen-wait');
+        });
+
+        peer.on('connection', (conn) => {
+            connections.push(conn);
+            conn.on('data', (data) => handleHostData(data, conn));
+        });
+    }
+
+    function joinRoom() {
+        myNickname = document.getElementById('nickname').value.trim();
+        const code = document.getElementById('join-code').value.trim();
+        if (!myNickname || !code) return alert('별명과 코드를 입력해주세요! / Enter name & code!');
+
+        isHost = false;
+        peer = new Peer();
+
+        peer.on('open', () => {
+            hostConn = peer.connect('bg-game-' + code);
+            hostConn.on('open', () => {
+                hostConn.send({ type: 'JOIN', name: myNickname });
+                showScreen('screen-wait');
+                document.getElementById('display-room-code').innerText = code;
+            });
+
+            hostConn.on('data', handleGuestData);
+        });
+    }
+
+    function handleHostData(data, conn) {
+        if (data.type === 'JOIN') {
+            players.push({ id: conn.peer, name: data.name, eliminated: false });
+            broadcast({ type: 'PLAYERS_UPDATE', players });
+            updatePlayerList();
+        } else if (data.type === 'VOTE') {
+            votes[conn.peer] = data.option;
+            checkAllVoted();
+        }
+    }
+
+    function handleGuestData(data) {
+        if (data.type === 'PLAYERS_UPDATE') {
+            players = data.players;
+            updatePlayerList();
+        } else if (data.type === 'START_GAME') {
+            currentQuestion = data.question;
+            startClientGame();
+        } else if (data.type === 'SHOW_RESULTS') {
+            players = data.players;
+            renderResults(data.majority, data.minority, data.isDraw, data.winner);
+            showScreen('screen-result');
+        }
+    }
+
+    function broadcast(data) {
+        connections.forEach(c => c.send(data));
+    }
+
+    function updatePlayerList() {
+        document.getElementById('player-count').innerText = players.length;
+        const el = document.getElementById('player-list');
+        el.innerHTML = players.map(p => 
+            `<span class="player-tag ${p.eliminated ? 'eliminated' : ''}">${p.name}${p.eliminated ? ' (OUT)' : ''}</span>`
+        ).join('');
+    }
+
+    function startGame() {
+        const activePlayers = players.filter(p => !p.eliminated);
+        if (activePlayers.length <= 1) {
+            alert('생존자가 1명 이하입니다. 리셋 버튼을 눌러 다시 시작하세요!');
+            return;
+        }
+
+        const randomIndex = Math.floor(Math.random() * questions.length);
+        currentQuestion = questions[randomIndex];
+        broadcast({ type: 'START_GAME', question: currentQuestion });
+        startClientGame();
+    }
+
+    function startClientGame() {
+        votes = {};
+        const me = players.find(p => p.id === peer.id);
+        const isEliminated = me ? me.eliminated : false;
+
+        document.getElementById('opt1-btn').innerHTML = "1. " + currentQuestion[0];
+        document.getElementById('opt2-btn').innerHTML = "2. " + currentQuestion[1];
+        
+        document.getElementById('opt1-btn').style.border = 'none';
+        document.getElementById('opt2-btn').style.border = 'none';
+
+        document.getElementById('opt1-btn').disabled = isEliminated;
+        document.getElementById('opt2-btn').disabled = isEliminated;
+        document.getElementById('eliminated-notice').style.display = isEliminated ? 'block' : 'none';
+
+        showScreen('screen-game');
+
+        let timeLeft = 5;
+        document.getElementById('timer-display').innerText = timeLeft;
+        
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('timer-display').innerText = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                if (isHost) calcAndSendResults();
+            }
+        }, 1000);
+    }
+
+    function submitVote(option) {
+        const me = players.find(p => p.id === peer.id);
+        if (me && me.eliminated) return;
+
+        document.getElementById('opt1-btn').style.border = option === 1 ? '3px solid #3498db' : 'none';
+        document.getElementById('opt2-btn').style.border = option === 2 ? '3px solid #3498db' : 'none';
+
+        if (isHost) {
+            votes[peer.id] = option;
+            checkAllVoted();
+        } else {
+            hostConn.send({ type: 'VOTE', option });
+        }
+    }
+
+    function checkAllVoted() {
+        const activePlayers = players.filter(p => !p.eliminated);
+        if (Object.keys(votes).length >= activePlayers.length) {
+            clearInterval(timerInterval);
+            calcAndSendResults();
+        }
+    }
+
+    function calcAndSendResults() {
+        const activePlayers = players.filter(p => !p.eliminated);
+        const g1 = activePlayers.filter(p => votes[p.id] === 1);
+        const g2 = activePlayers.filter(p => votes[p.id] === 2);
+
+        let maj, min, isDraw = false;
+
+        if (g1.length > g2.length) {
+            maj = { opt: currentQuestion[0], players: g1 };
+            min = { opt: currentQuestion[1], players: g2 };
+        } else if (g2.length > g1.length) {
+            maj = { opt: currentQuestion[1], players: g2 };
+            min = { opt: currentQuestion[0], players: g1 };
+        } else {
+            isDraw = true;
+        }
+
+        if (!isDraw && min) {
+            min.players.forEach(minP => {
+                const target = players.find(p => p.id === minP.id);
+                if (target) target.eliminated = true;
+            });
+        }
+
+        const remaining = players.filter(p => !p.eliminated);
+        let winner = null;
+        if (remaining.length === 1) {
+            winner = remaining[0];
+        }
+
+        const resData = { type: 'SHOW_RESULTS', majority: maj, minority: min, isDraw, players, winner };
+        broadcast(resData);
+        renderResults(maj, min, isDraw, winner);
+        
+        if (isHost) {
+            document.getElementById('btn-next').style.display = 'block';
+            document.getElementById('btn-reset-result').style.display = 'block';
+        }
+        showScreen('screen-result');
+    }
+
+    function renderResults(maj, min, isDraw, winner) {
+        const container = document.getElementById('result-container');
+        const penaltyBtn = document.getElementById('btn-draw-penalty');
+        const penaltySection = document.getElementById('penalty-section');
+        
+        container.innerHTML = "";
+        penaltySection.style.display = 'none';
+
+        if (winner) {
+            container.innerHTML = `
+                <div class="result-card majority" style="text-align:center; padding:20px;">
+                    <h2 style="color:var(--accent-yellow);">👑 최종 우승자! (WINNER)</h2>
+                    <h1 style="font-size:2rem; margin:10px 0;">${winner.name}</h1>
+                    <p>축하합니다! 마지막까지 생존하셨습니다.<br>Congratulations! You survived to the end.</p>
+                </div>
+            `;
+            penaltyBtn.style.display = 'none';
+            return;
+        }
+
+        if (isDraw) {
+            container.innerHTML = `<div class="result-card"><b>5:5 동점! (Tie)</b><br>탈락자 없이 넘어갑니다. No one eliminated! 🎉</div>`;
+            penaltyBtn.style.display = 'none';
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="result-card majority">
+                <span class="badge badge-majority">다수파 - 생존 (Majority - Safe) [${maj.players.length}]</span>
+                <h4>${maj.opt}</h4>
+                <div class="player-list">${maj.players.map(p => p.name).join(', ')}</div>
+            </div>
+            <div class="result-card minority">
+                <span class="badge badge-minority">소수파 - 탈락 (Minority - OUT) [${min.players.length}]</span>
+                <h4>${min.opt}</h4>
+                <div class="player-list">${min.players.map(p => p.name).join(', ')}</div>
+            </div>
+        `;
+
+        penaltyBtn.style.display = 'block';
+    }
+
+    function drawPenalty() {
+        const randomIndex = Math.floor(Math.random() * penalties.length);
+        const selectedPenalty = penalties[randomIndex];
+        
+        document.getElementById('penalty-display').innerText = selectedPenalty;
+        document.getElementById('penalty-section').style.display = 'block';
+        document.getElementById('btn-draw-penalty').style.display = 'none';
+    }
+
+    function nextRound() {
+        startGame();
+    }
+
+    // 리셋 기능: 모든 참가자의 탈락 상태 해제 후 업데이트
+    function resetGame() {
+        if (!isHost) return;
+        players.forEach(p => p.eliminated = false);
+        broadcast({ type: 'PLAYERS_UPDATE', players });
+        updatePlayerList();
+        showScreen('screen-wait');
+        alert('모든 참가자의 탈락 상태가 초기화되었습니다! (Reset Complete)');
+    }
+</script>
+</body>
+</html>
