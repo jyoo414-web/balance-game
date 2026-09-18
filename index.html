@@ -95,7 +95,8 @@
 
     <!-- 3. 게임 투표 화면 (Game) -->
     <div id="screen-game" class="screen">
-        <div class="timer" id="timer-display">7</div>
+        <!-- 1) 기본 타이머 표기 10초로 변경 -->
+        <div class="timer" id="timer-display">10</div>
         <div id="eliminated-notice" style="display:none; color: var(--accent-red); font-weight:bold; margin-bottom:10px;">
             ❌ 귀하는 탈락했습니다. (관전 중)<br>You are eliminated. (Spectating)
         </div>
@@ -122,7 +123,6 @@
 
 <script>
     const questions = [
-        // 1 ~ 100 번 질문
         ["평생 여름만 살기<br><small>Summer forever</small>", "평생 겨울만 살기<br><small>Winter forever</small>"],
         ["1년 동안 커피 금지<br><small>No Coffee for 1 year</small>", "1년 동안 술 금지<br><small>No Alcohol for 1 year</small>"],
         ["친구 100명과 얕게 지내기<br><small>100 casual friends</small>", "친구 3명과 깊게 지내기<br><small>3 close best friends</small>"],
@@ -223,8 +223,6 @@
         ["모든 외국어 유창<br><small>Fluent in all languages</small>", "모든 악기 연주<br><small>Play all instruments</small>"],
         ["요리 완벽 능숙<br><small>Master of cooking</small>", "운동 완벽 능숙<br><small>Master of sports</small>"],
         ["평생 운이 좋음<br><small>Lucky forever</small>", "평생 판단력이 좋음<br><small>Great wisdom forever</small>"],
-
-        // 추가 101 ~ 200 번 질문
         ["평생 모자만 쓰고 다니기<br><small>Wear hats forever</small>", "평생 선글라스만 쓰고 다니기<br><small>Wear sunglasses forever</small>"],
         ["신발 끈 매번 풀어짐<br><small>Shoelaces untie every time</small>", "양말 한쪽 매번 구멍 남<br><small>Hole in one sock every time</small>"],
         ["평생 스마트폰으로 TV 보기<br><small>Watch TV on smartphone</small>", "평생 TV로만 모든 영상 보기<br><small>Watch all videos on TV</small>"],
@@ -483,7 +481,8 @@
 
         showScreen('screen-game');
 
-        let timeLeft = 7;
+        // 2) 자바스크립트 카운트다운 초기값 10초로 변경
+        let timeLeft = 10;
         document.getElementById('timer-display').innerText = timeLeft;
         
         clearInterval(timerInterval);
