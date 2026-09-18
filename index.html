@@ -95,7 +95,7 @@
 
     <!-- 3. 게임 투표 화면 (Game) -->
     <div id="screen-game" class="screen">
-        <div class="timer" id="timer-display">5</div>
+        <div class="timer" id="timer-display">7</div>
         <div id="eliminated-notice" style="display:none; color: var(--accent-red); font-weight:bold; margin-bottom:10px;">
             ❌ 귀하는 탈락했습니다. (관전 중)<br>You are eliminated. (Spectating)
         </div>
@@ -122,6 +122,7 @@
 
 <script>
     const questions = [
+        // 1 ~ 100 번 질문
         ["평생 여름만 살기<br><small>Summer forever</small>", "평생 겨울만 살기<br><small>Winter forever</small>"],
         ["1년 동안 커피 금지<br><small>No Coffee for 1 year</small>", "1년 동안 술 금지<br><small>No Alcohol for 1 year</small>"],
         ["친구 100명과 얕게 지내기<br><small>100 casual friends</small>", "친구 3명과 깊게 지내기<br><small>3 close best friends</small>"],
@@ -221,7 +222,109 @@
         ["오늘 기억 완벽 저장<br><small>Save today's memory</small>", "원하는 기억 삭제<br><small>Erase unwanted memory</small>"],
         ["모든 외국어 유창<br><small>Fluent in all languages</small>", "모든 악기 연주<br><small>Play all instruments</small>"],
         ["요리 완벽 능숙<br><small>Master of cooking</small>", "운동 완벽 능숙<br><small>Master of sports</small>"],
-        ["평생 운이 좋음<br><small>Lucky forever</small>", "평생 판단력이 좋음<br><small>Great wisdom forever</small>"]
+        ["평생 운이 좋음<br><small>Lucky forever</small>", "평생 판단력이 좋음<br><small>Great wisdom forever</small>"],
+
+        // 추가 101 ~ 200 번 질문
+        ["평생 모자만 쓰고 다니기<br><small>Wear hats forever</small>", "평생 선글라스만 쓰고 다니기<br><small>Wear sunglasses forever</small>"],
+        ["신발 끈 매번 풀어짐<br><small>Shoelaces untie every time</small>", "양말 한쪽 매번 구멍 남<br><small>Hole in one sock every time</small>"],
+        ["평생 스마트폰으로 TV 보기<br><small>Watch TV on smartphone</small>", "평생 TV로만 모든 영상 보기<br><small>Watch all videos on TV</small>"],
+        ["1년 동안 유튜브 금지<br><small>No YouTube for 1 year</small>", "1년 동안 인스타그램/SNS 금지<br><small>No Instagram/SNS for 1 year</small>"],
+        ["내가 말하는 족족 다 사실이 됨<br><small>Everything I say becomes true</small>", "남이 말하는 거짓말을 다 알아챔<br><small>Detect every lie told by others</small>"],
+        ["항상 한 발 늦는 타이밍<br><small>Always one step late timing</small>", "항상 너무 빠른 눈치없는 타이밍<br><small>Always way too early timing</small>"],
+        ["내가 먹는 요리 항상 간이 싱거움<br><small>My food is always bland</small>", "내가 먹는 요리 항상 간이 짤 짜움<br><small>My food is always too salty</small>"],
+        ["평생 양념치킨만 먹기<br><small>Seasoned chicken forever</small>", "평생 후라이드치킨만 먹기<br><small>Fried chicken forever</small>"],
+        ["피자에 핑거푸드(피클) 금지<br><small>No pickles with pizza</small>", "치킨에 치킨무 금지<br><small>No pickled radish with chicken</small>"],
+        ["탕수육 찍먹<br><small>Dipping Sauce for Pork</small>", "탕수육 부먹<br><small>Pouring Sauce for Pork</small>"],
+        ["짜장면 평생 먹기<br><small>Eat Jajangmyeon forever</small>", "짬뽕 평생 먹기<br><small>Eat Jjamppong forever</small>"],
+        ["물냉면 평생 먹기<br><small>Cold Soup Noodles forever</small>", "비빔냉면 평생 먹기<br><small>Spicy Cold Noodles forever</small>"],
+        ["평생 겨울 패딩만 입기<br><small>Wear winter padding forever</small>", "평생 반팔 반바지만 입기<br><small>Wear short sleeves & shorts</small>"],
+        ["1년 동안 세수 안 하기<br><small>No face washing for 1 year</small>", "1년 동안 이 안 닦기<br><small>No tooth brushing for 1 year</small>"],
+        ["월 500만원 받고 백수하기<br><small>Get $5K/mo and stay unemployed</small>", "월 1000만원 받고 일주일에 70시간 일하기<br><small>Get $10K/mo and work 70 hrs/wk</small>"],
+        ["타임머신 얻기 (과거/미래 선택)<br><small>Get Time Machine</small>", "어디든 순간이동 문 얻기<br><small>Get Anywhere Door Teleport</small>"],
+        ["평생 100미터 달리기 전력질주 가능<br><small>Sprint 100m full speed forever</small>", "평생 잠 안 자도 안 피곤함<br><small>Never tired without sleep</small>"],
+        ["내 마음대로 날씨 바꾸기<br><small>Control the weather</small>", "동물들과 완벽하게 대화하기<br><small>Talk fluently with animals</small>"],
+        ["투명인간 능력 얻기<br><small>Invisibility power</small>", "비행 능력 얻기<br><small>Flight power</small>"],
+        ["평생 샤워할 때 차가운 물만 나오기<br><small>Only cold water for shower</small>", "평생 마실 물이 미지근한 물만 있기<br><small>Only lukewarm drinking water</small>"],
+        ["이어폰 한쪽만 들리기<br><small>Earphones work on one side only</small>", "스피커 지지지직 소리 나기<br><small>Speaker with static sound</small>"],
+        ["평생 버스 타고 창가 자리에만 앉기<br><small>Bus window seat forever</small>", "평생 비행기 타고 복도 자리에만 앉기<br><small>Airplane aisle seat forever</small>"],
+        ["로또 1등 당첨 후 전 국민이 알기<br><small>Win lottery & nation knows</small>", "로또 1등 당첨 금액 절반만 받고 비밀유지<br><small>Win half lottery & keep secret</small>"],
+        ["친구 축의금 100만원 내기<br><small>Give $1000 wedding gift</small>", "친구 축의금 0원 내고 욕먹기<br><small>Give $0 and get blamed</small>"],
+        ["평생 틱톡기능만 있는 폰 쓰기<br><small>Phone with only Short-form videos</small>", "평생 텍스트만 나오는 2G폰 쓰기<br><small>Text-only 2G phone forever</small>"],
+        ["친구들과 대화 중 내 비밀 강제 발설<br><small>Accidentally reveal own secret</small>", "친구가 나한테 엄청 큰 거짓말 함<br><small>Friend tells a huge lie to me</small>"],
+        ["내가 아는 길 항상 돌아가기<br><small>Always take the long detour</small>", "처음 가는 길에서 무조건 길 잃기<br><small>Always get lost on new routes</small>"],
+        ["평생 생선 가시 바르기 담당<br><small>Debone fish forever for others</small>", "평생 고기 굽기 담당<br><small>Grill meat forever for others</small>"],
+        ["매일 밤 모기 1마리가 귀가에서 윙윙<br><small>1 mosquito buzzing every night</small>", "매일 아침 발가락 찌릿하게 찍히기<br><small>Stub toe hard every morning</small>"],
+        ["내 모든 일기장 전 국민 공개<br><small>Publish all my diaries to public</small>", "내 모든 검색 키워드 전 국민 공개<br><small>Publish search history to public</small>"],
+        ["평생 김치 없이 살기<br><small>No Kimchi forever</small>", "평생 치즈 없이 살기<br><small>No Cheese forever</small>"],
+        ["붕어빵 머리부터 먹기<br><small>Fish bread from head first</small>", "붕어빵 꼬리부터 먹기<br><small>Fish bread from tail first</small>"],
+        ["팥붕어빵<br><small>Red Bean Fish Bread</small>", "슈크림붕어빵<br><small>Custard Cream Fish Bread</small>"],
+        ["계란후라이 반숙<br><small>Soft-boiled / Sunny side egg</small>", "계란후라이 완숙<br><small>Hard-boiled / Fully cooked egg</small>"],
+        ["평생 소주만 마시기<br><small>Soju only forever</small>", "평생 맥주만 마시기<br><small>Beer only forever</small>"],
+        ["아이스 아메리카노 평생 마시기<br><small>Iced Americano forever</small>", "따뜻한 아메리카노 평생 마시기<br><small>Hot Americano forever</small>"],
+        ["평생 젓가락질 못 하기<br><small>Can't use chopsticks forever</small>", "평생 포크만 써서 밥 먹기<br><small>Use fork only for all meals</small>"],
+        ["영화관에서 옆 사람이 계속 말하기<br><small>Person talking next to me in cinema</small>", "영화관에서 앞 사람이 키가 너무 큼<br><small>Very tall person sitting in front</small>"],
+        ["미용실에서 원하는 길이보다 5cm 더 짧게 자름<br><small>Hair cut 5cm shorter than wanted</small>", "원하는 색과 완전히 다르게 염색됨<br><small>Hair dyed totally wrong color</small>"],
+        ["평생 엘리베이터 갇힘 경험 1번<br><small>Trapped in elevator once</small>", "평생 놀이기구 타다 정지 경험 1번<br><small>Stuck on roller coaster once</small>"],
+        ["내가 좋아하는 사람이 나 안 좋아함<br><small>Person I like doesn't like me</small>", "내가 싫어하는 사람이 나를 너무 좋아함<br><small>Person I dislike loves me too much</small>"],
+        ["평생 민트초코만 먹기<br><small>Mint chocolate forever</small>", "평생 민트초코 절대 금지<br><small>No mint chocolate forever</small>"],
+        ["하와이안 피자(파인애플) 극호<br><small>Hawaiian Pineapple Pizza lover</small>", "하와이안 피자 절대 안 먹음<br><small>Never eat Hawaiian Pizza</small>"],
+        ["평생 운동화만 신기<br><small>Wear sneakers only</small>", "평생 구두/슬리퍼만 신기<br><small>Wear dress shoes/slippers only</small>"],
+        ["소음이 심하지만 야경 좋은 집<br><small>Noisy house with great night view</small>", "조용하지만 창문 열면 벽만 보이는 집<br><small>Quiet house facing a wall</small>"],
+        ["평생 노래방 금지<br><small>No Karaoke forever</small>", "평생 PC방 금지<br><small>No Internet Cafe forever</small>"],
+        ["선물 미리 알고 받기<br><small>Know gift in advance</small>", "선물 서프라이즈로 받기<br><small>Surprise gift</small>"],
+        ["과거로 돌아가서 다시 공부하기<br><small>Go back in time & study again</small>", "현재 상태에서 50억 로또 되기<br><small>Get $5M lottery now</small>"],
+        ["노래를 지독하게 못 부름<br><small>Terrible at singing</small>", "춤을 지독하게 못 춤<br><small>Terrible at dancing</small>"],
+        ["평생 화장 안 하고 살기<br><small>No makeup forever</small>", "평생 매일 풀메이크업 하기<br><small>Full makeup every day</small>"],
+        ["내 생일에 아무도 축하 안 해줌<br><small>No one celebrates my birthday</small>", "모르는 사람 100명이 축하 노래 부름<br><small>100 strangers sing birthday song</small>"],
+        ["평생 지하철만 타기<br><small>Subway only forever</small>", "평생 버스만 타기<br><small>Bus only forever</small>"],
+        ["휴대폰 떨어뜨려서 액정 깨지기<br><small>Drop phone & crack screen</small>", "휴대폰 변기에 빠뜨리기<br><small>Drop phone in toilet</small>"],
+        ["평생 햄버거 패티 1장만 먹기<br><small>Single patty burger forever</small>", "평생 감자튀김 없이 햄버거 먹기<br><small>Burger without fries forever</small>"],
+        ["월급날에 맞춰서 돈 들어오기<br><small>Salary on exact date</small>", "랜덤 날짜에 월급+20% 들어오기<br><small>Salary +20% on random date</small>"],
+        ["매일 다른 옷 입고 출근<br><small>Wear different outfit daily</small>", "단벌 신사로 단체 유니폼 입고 출근<br><small>Wear same uniform daily</small>"],
+        ["100% 확률로 100만원 받기<br><small>100% chance to win $1,000</small>", "50% 확률로 1000만원 받기<br><small>50% chance to win $10,000</small>"],
+        ["자고 일어났더니 얼굴에 문신 생김<br><small>Wake up with face tattoo</small>", "자고 일어났더니 머리카락 삭발됨<br><small>Wake up with shaved head</small>"],
+        ["평생 지각 한 번도 안 하기<br><small>Never late in life</small>", "평생 실수 한 번도 안 하기<br><small>Never make a mistake</small>"],
+        ["연상과 연애하기<br><small>Date someone older</small>", "연하와 연애하기<br><small>Date someone younger</small>"],
+        ["매일 라면 1봉지 무료 제공<br><small>Free 1 instant ramen daily</small>", "매일 카페 음료 1잔 무료 제공<br><small>Free 1 cafe drink daily</small>"],
+        ["내가 쓴 글이 베스트셀러 되기<br><small>Write a bestseller book</small>", "내가 만든 영상이 조회수 1억 회<br><small>Make a video with 100M views</small>"],
+        ["평생 택시비 무료<br><small>Free taxi rides forever</small>", "평생 비행기 일반석 무료<br><small>Free economy flights forever</small>"],
+        ["배고픔 절대 안 느낌<br><small>Never feel hungry</small>", "졸림 절대 안 느낌<br><small>Never feel sleepy</small>"],
+        ["평생 매운 떡볶이만 먹기<br><small>Super spicy Tteokbokki only</small>", "평생 짜장 떡볶이만 먹기<br><small>Jajang Tteokbokki only</small>"],
+        ["친한 친구의 비밀을 내가 알게 됨<br><small>Find out best friend's secret</small>", "내 비밀을 친한 친구가 알게 됨<br><small>Best friend finds out my secret</small>"],
+        ["말할 때마다 랩으로 말하기<br><small>Talk in rap every time</small>", "말할 때마다 오페라 톤으로 말하기<br><small>Talk in opera tone every time</small>"],
+        ["입고 있는 옷이 항상 한 치수 큼<br><small>Clothes are always 1 size bigger</small>", "입고 있는 옷이 항상 한 치수 작음<br><small>Clothes are always 1 size smaller</small>"],
+        ["평생 이어폰 없이 대중교통 타기<br><small>No earphones in public transport</small>", "평생 스마트폰 없이 화장실 가기<br><small>No smartphone in bathroom</small>"],
+        ["1년 동안 초콜릿 금지<br><small>No chocolate for 1 year</small>", "1년 동안 과자/칩 금지<br><small>No chips/snacks for 1 year</small>"],
+        ["내가 키우는 반려동물이 말함<br><small>My pet starts talking</small>", "내가 원하는 동물로 1시간 변신<br><small>Transform into animal for 1 hr</small>"],
+        ["평생 삼겹살만 먹기<br><small>Pork belly only</small>", "평생 소갈비만 먹기<br><small>Beef ribs only</small>"],
+        ["매일 아침 6시 자동 기상<br><small>Wake up automatically at 6 AM</small>", "매일 밤 12시 자동 수면<br><small>Fall asleep automatically at 12 AM</small>"],
+        ["친구에게 돈 빌려주고 안 받기<br><small>Lend money & don't get paid</small>", "친구에게 돈 빌리고 못 갚기<br><small>Borrow money & can't payback</small>"],
+        ["내 모든 대화 기록이 백업됨<br><small>All chat logs backed up forever</small>", "내 모든 사진이 자동 저장됨<br><small>All photos auto-saved forever</small>"],
+        ["평생 숟가락 없이 젓가락으로 국물 먹기<br><small>Drink soup with chopsticks only</small>", "평생 포크로 국수 먹기<br><small>Eat noodles with fork only</small>"],
+        ["평생 디저트 금지<br><small>No desserts forever</small>", "평생 야식 금지<br><small>No late-night snacks forever</small>"],
+        ["주말마다 비 오기<br><small>Rains every weekend</small>", "평일에만 매일 미세먼지 최악<br><small>Worst air quality every weekday</small>"],
+        ["평생 패스트푸드 금지<br><small>No fast food forever</small>", "평생 탄산음료/주스 금지<br><small>No soda/juice forever</small>"],
+        ["내 목소리가 평생 성우 목소리<br><small>Voice sounds like voice actor</small>", "내 외모가 평생 아이돌 외모<br><small>Appearance like K-pop idol</small>"],
+        ["1년 동안 외출 금지(집콕)<br><small>Stay indoors for 1 year</small>", "1년 동안 집 안 들어오기(노숙/여행)<br><small>No staying home for 1 year</small>"],
+        ["평생 놀이공원 자유이용권<br><small>Free amusement park pass</small>", "평생 워터파크 자유이용권<br><small>Free water park pass</small>"],
+        ["항상 주머니에 5천원 들어있음<br><small>Always $5 in pocket</small>", "항상 내 잔고가 10만원 이상 유지<br><small>Bank account stays above $100</small>"],
+        ["평생 넷플릭스 무료<br><small>Free Netflix forever</small>", "평생 쿠팡 와우/배민 클럽 무료<br><small>Free Delivery Service membership</small>"],
+        ["내가 만든 요리가 항상 맛있음<br><small>My cooked food is always delicious</small>", "남이 해준 요리가 항상 맛있음<br><small>Food made by others is always great</small>"],
+        ["모든 사람의 이름을 한 번에 외움<br><small>Memorize names instantly</small>", "모든 사람의 얼굴을 한 번에 외움<br><small>Memorize faces instantly</small>"],
+        ["신발 안에 모래 들어가기<br><small>Sand inside shoes always</small>", "옷 안에 택(Tag)이 까슬거리기<br><small>Itchy clothing tag always</small>"],
+        ["평생 미용실 직접 머리 잘라야 함<br><small>Must cut own hair forever</small>", "평생 매일 미용사가 머리 만져줌<br><small>Hair styled by stylist daily</small>"],
+        ["휴대폰 잃어버리기<br><small>Lose smartphone</small>", "지갑 잃어버리기<br><small>Lose wallet</small>"],
+        ["상사에게 실수로 반말하기<br><small>Accidentally talk casually to boss</small>", "부모님께 실수로 욕하기<br><small>Accidentally swear at parents</small>"],
+        ["평생 매운 음식만 먹기<br><small>Spicy food only forever</small>", "평생 싱거운 음식만 먹기<br><small>Bland food only forever</small>"],
+        ["내 생일에 친구가 안 옴<br><small>No friends come to my birthday</small>", "친구 생일에 나만 안 불림<br><small>I'm the only one not invited</small>"],
+        ["10년 동안 TV 안 보기<br><small>No TV for 10 years</small>", "10년 동안 게임 안 하기<br><small>No gaming for 10 years</small>"],
+        ["평생 여름 옷만 입기<br><small>Summer clothes only forever</small>", "평생 겨울 옷만 입기<br><small>Winter clothes only forever</small>"],
+        ["항상 칫솔모가 뻐커짐<br><small>Toothbrush bristles always bent</small>", "항상 수건에서 꿉꿉한 냄새 남<br><small>Towel always smells damp</small>"],
+        ["평생 무소음 키보드만 쓰기<br><small>Silent keyboard only</small>", "평생 청축(소리 큰) 키보드만 쓰기<br><small>Loud mechanical keyboard only</small>"],
+        ["평생 스마트워치만 차기<br><small>Smartwatch only forever</small>", "평생 아날로그 시계만 차기<br><small>Analog watch only forever</small>"],
+        ["내가 타려는 버스 바로 출발함<br><small>Bus leaves right as I arrive</small>", "내가 타려는 지하철 반대편으로 탑승<br><small>Get on subway in wrong direction</small>"],
+        ["평생 콜라만 마시기<br><small>Coke only forever</small>", "평생 사이다만 마시기<br><small>Sprite only forever</small>"],
+        ["지구온난화 완벽 해결하기<br><small>Solve global warming completely</small>", "세계 평화 완벽 달성하기<br><small>Achieve world peace completely</small>"]
     ];
 
     const penalties = [
@@ -380,7 +483,7 @@
 
         showScreen('screen-game');
 
-        let timeLeft = 5;
+        let timeLeft = 7;
         document.getElementById('timer-display').innerText = timeLeft;
         
         clearInterval(timerInterval);
@@ -513,7 +616,6 @@
         startGame();
     }
 
-    // 리셋 기능: 모든 참가자의 탈락 상태 해제 후 업데이트
     function resetGame() {
         if (!isHost) return;
         players.forEach(p => p.eliminated = false);
