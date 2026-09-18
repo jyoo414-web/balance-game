@@ -95,7 +95,6 @@
 
     <!-- 3. 게임 투표 화면 (Game) -->
     <div id="screen-game" class="screen">
-        <!-- 1) 기본 타이머 표기 10초로 변경 -->
         <div class="timer" id="timer-display">10</div>
         <div id="eliminated-notice" style="display:none; color: var(--accent-red); font-weight:bold; margin-bottom:10px;">
             ❌ 귀하는 탈락했습니다. (관전 중)<br>You are eliminated. (Spectating)
@@ -436,6 +435,10 @@
             players = data.players;
             renderResults(data.majority, data.minority, data.isDraw, data.winner);
             showScreen('screen-result');
+        } else if (data.type === 'RESET_GAME') {
+            players = data.players;
+            updatePlayerList();
+            showScreen('screen-wait');
         }
     }
 
@@ -481,7 +484,6 @@
 
         showScreen('screen-game');
 
-        // 2) 자바스크립트 카운트다운 초기값 10초로 변경
         let timeLeft = 10;
         document.getElementById('timer-display').innerText = timeLeft;
         
@@ -618,10 +620,9 @@
     function resetGame() {
         if (!isHost) return;
         players.forEach(p => p.eliminated = false);
-        broadcast({ type: 'PLAYERS_UPDATE', players });
+        broadcast({ type: 'RESET_GAME', players });
         updatePlayerList();
         showScreen('screen-wait');
-        alert('모든 참가자의 탈락 상태가 초기화되었습니다! (Reset Complete)');
     }
 </script>
 </body>
