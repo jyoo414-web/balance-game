@@ -1,16 +1,27 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- PWA 및 매니페스트 연결 -->
+   <!-- PWA 매니페스트 및 서비스워커 연결 -->
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#4A90E2">
+<meta name="theme-color" content="#121212">
 
 <!-- 아이폰(iOS) 전용 설정 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="밸런스게임">
 <link rel="apple-touch-icon" href="icon-192.png">
-
+    
 <!-- 서비스 워커 등록 스크립트 -->
+    <script>
+  // 서비스 워커 등록
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('SW 등록 성공:', reg))
+        .catch(err => console.log('SW 등록 실패:', err));
+    });
+  }
+</script>
 <script>
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js');
